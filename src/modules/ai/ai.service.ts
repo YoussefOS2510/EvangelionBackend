@@ -43,7 +43,7 @@ export class AiQuestionService {
     const prompt = `<context>\n[ARABIC - SMITH & VAN DYCK]:\n${versesAr}\n\n[ENGLISH - NEW KING JAMES VERSION]:\n${versesEn}\n</context>\nGenerate 1 Multiple Choice Question (${type}) testing reading comprehension for grades ${minGrade}-${maxGrade}.`;
 
     try {
-      const responseSchema = {
+      const responseSchema: any = {
         type: SchemaType.OBJECT,
         properties: {
           type: {

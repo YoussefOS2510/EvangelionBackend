@@ -25,6 +25,8 @@ export interface MockUser {
   preferred_lang: string;
   total_points: number;
   current_streak: number;
+  longest_streak: number;
+  last_completed_date: string | null;
   is_active: boolean;
 }
 
@@ -87,10 +89,10 @@ export class InMemoryDatabase {
   ];
 
   users: MockUser[] = [
-    { id: '11111111-1111-1111-1111-111111111111', group_id: 3, full_name: 'David Mina (Grade 5)', username: 'david_mina', role: 'kid', preferred_lang: 'ar', total_points: 50, current_streak: 4, is_active: true },
-    { id: '22222222-2222-2222-2222-222222222222', group_id: 3, full_name: 'Peter George (Grade 6)', username: 'peter_george', role: 'kid', preferred_lang: 'ar', total_points: 80, current_streak: 7, is_active: true },
-    { id: '33333333-3333-3333-3333-333333333333', group_id: 3, full_name: 'Mark Anton (Grade 5)', username: 'mark_anton', role: 'kid', preferred_lang: 'en', total_points: 30, current_streak: 2, is_active: true },
-    { id: '99999999-9999-9999-9999-999999999999', group_id: 0, full_name: 'Servant Michael', username: 'servant_michael', role: 'admin_servant', preferred_lang: 'ar', total_points: 0, current_streak: 0, is_active: true }
+    { id: '11111111-1111-1111-1111-111111111111', group_id: 3, full_name: 'David Mina (Grade 5)', username: 'david_mina', role: 'kid', preferred_lang: 'ar', total_points: 50, current_streak: 4, longest_streak: 6, last_completed_date: '2026-09-29', is_active: true },
+    { id: '22222222-2222-2222-2222-222222222222', group_id: 3, full_name: 'Peter George (Grade 6)', username: 'peter_george', role: 'kid', preferred_lang: 'ar', total_points: 80, current_streak: 7, longest_streak: 10, last_completed_date: '2026-09-29', is_active: true },
+    { id: '33333333-3333-3333-3333-333333333333', group_id: 3, full_name: 'Mark Anton (Grade 5)', username: 'mark_anton', role: 'kid', preferred_lang: 'en', total_points: 30, current_streak: 2, longest_streak: 3, last_completed_date: '2026-09-28', is_active: true },
+    { id: '99999999-9999-9999-9999-999999999999', group_id: 0, full_name: 'Servant Michael', username: 'servant_michael', role: 'admin_servant', preferred_lang: 'ar', total_points: 0, current_streak: 0, longest_streak: 0, last_completed_date: null, is_active: true }
   ];
 
   verses: MockVerse[] = [
@@ -225,9 +227,75 @@ export class InMemoryDatabase {
       return { rows, rowCount: rows.length };
     }
 
-    // 2. GET daily reading for group
+    // 2. GET daily reading(s) for group
     if (t.includes('from daily_readings dr') && t.includes('where dr.group_id = $1')) {
       const groupId = params[0];
+
+      // Multi-row query for streak history: dr.scheduled_date <= $2 ORDER BY dr.scheduled_date DESC
+      if (t.includes('scheduled_date <=') || t.includes('order by dr.scheduled_date desc')) {
+        const cutoffDate = params[1] || new Date().toISOString().split('T')[0];
+
+        // Ensure at least today's reading exists
+        let todayReading = this.readings.find(r => r.group_id === groupId && r.scheduled_date === cutoffDate);
+        if (!todayReading) {
+          const newId = `reading-group-${groupId}-${cutoffDate}`;
+          todayReading = {
+            id: newId,
+            group_id: groupId,
+            scheduled_date: cutoffDate,
+            book_number: 43,
+            start_chapter: 3,
+            start_verse: 1,
+            end_chapter: 3,
+            end_verse: 5,
+            excluded_verses: []
+          };
+          this.readings.push(todayReading);
+
+          this.questions.push({
+            id: `question-group-${groupId}-${cutoffDate}`,
+            reading_id: newId,
+            type: 'mcq',
+            prompt_ar: 'مَا اسْمُ الرَّجُلِ الَّذِي جَاءَ إِلَى يَسُوعَ لَيْلاً؟',
+            prompt_en: 'What was the name of the man who came to Jesus by night?',
+            options: {
+              A: { ar: 'نِيقُودِيمُوسُ', en: 'Nicodemus' },
+              B: { ar: 'بُولُسُ', en: 'Paul' },
+              C: { ar: 'بُطْرُسُ', en: 'Peter' },
+              D: { ar: 'لِعَازَرُ', en: 'Lazarus' }
+            },
+            correct_answer: 'A',
+            points_value: 10,
+            sort_order: 1,
+            is_approved: true
+          });
+        }
+
+        const filtered = this.readings
+          .filter(r => r.group_id === groupId && r.scheduled_date <= cutoffDate)
+          .sort((a, b) => b.scheduled_date.localeCompare(a.scheduled_date));
+
+        const rows = filtered.map(r => {
+          const v = this.verses.find(verse => verse.book_number === r.book_number);
+          return {
+            id: r.id,
+            group_id: r.group_id,
+            scheduled_date: r.scheduled_date,
+            book_number: r.book_number,
+            start_chapter: r.start_chapter,
+            start_verse: r.start_verse,
+            end_chapter: r.end_chapter,
+            end_verse: r.end_verse,
+            excluded_verses: r.excluded_verses,
+            book_name_en: v?.book_name_en || 'Bible',
+            book_name_ar: v?.book_name_ar || 'الكتاب المقدس'
+          };
+        });
+
+        return { rows, rowCount: rows.length };
+      }
+
+      // Single day reading lookup
       const scheduledDate = params[1] || new Date().toISOString().split('T')[0];
 
       let reading = this.readings.find(r => r.group_id === groupId && r.scheduled_date === scheduledDate);
@@ -284,6 +352,26 @@ export class InMemoryDatabase {
       return { rows: [row], rowCount: 1 };
     }
 
+    // 2b. Stats aggregation for streak inspection
+    if (t.includes('from questions q') && t.includes('from submissions s')) {
+      const readingId = params[0];
+      const userId = params[1];
+      const total_q = this.questions.filter(q => q.reading_id === readingId && q.is_approved).length;
+      const userSubs = this.submissions.filter(s => s.reading_id === readingId && s.user_id === userId);
+      const answered_q = userSubs.length;
+      const correct_q = userSubs.filter(s => s.is_correct).length;
+      const pts = userSubs.reduce((acc, s) => acc + (s.points_awarded || 0), 0);
+      return {
+        rows: [{
+          total_q,
+          answered_q,
+          correct_q,
+          pts
+        }],
+        rowCount: 1
+      };
+    }
+
     // 3. GET questions for reading
     if (t.includes('from questions q') && t.includes('where q.reading_id = $1')) {
       const readingId = params[0];
@@ -336,6 +424,8 @@ export class InMemoryDatabase {
           preferred_lang: 'ar',
           total_points: 0,
           current_streak: 0,
+          longest_streak: 0,
+          last_completed_date: null,
           is_active: true
         };
         this.users.push(found);
@@ -381,11 +471,26 @@ export class InMemoryDatabase {
     }
 
     // 10. Update user streak
-    if (t.includes('update users set current_streak = $1')) {
-      const [streak, userId] = params;
-      const u = this.users.find(usr => usr.id === userId);
-      if (u) u.current_streak = streak;
-      return { rows: [], rowCount: 1 };
+    if (t.includes('update users') && t.includes('current_streak = $1')) {
+      const streak = params[0];
+      let targetUserId = params[1];
+      let completedDate: string | null = null;
+      if (params.length >= 3) {
+        completedDate = params[1];
+        targetUserId = params[2];
+      }
+      const u = this.users.find(usr => usr.id === targetUserId);
+      if (u) {
+        u.current_streak = streak;
+        u.longest_streak = Math.max(u.longest_streak || 0, streak);
+        if (completedDate) {
+          u.last_completed_date = completedDate;
+        }
+      }
+      return { 
+        rows: u ? [{ current_streak: u.current_streak, longest_streak: u.longest_streak }] : [{ current_streak: streak, longest_streak: streak }], 
+        rowCount: 1 
+      };
     }
 
     // 11. Schedule readings (with ON CONFLICT DO UPDATE behavior)

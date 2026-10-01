@@ -6,6 +6,7 @@ import { config } from './config/env.js';
 import { identityMiddleware } from './middleware/identity.middleware.js';
 import { readingsRoutes } from './modules/readings/readings.routes.js';
 import { submissionsRoutes } from './modules/submissions/submissions.routes.js';
+import { streakRoutes } from './modules/streak/streak.routes.js';
 import { aiRoutes } from './modules/ai/ai.routes.js';
 import { adminRoutes } from './modules/admin/admin.routes.js';
 import { leaderboardRoutes } from './modules/leaderboard/leaderboard.routes.js';
@@ -47,7 +48,8 @@ export function buildApp() {
       tags: [
         { name: 'Readings', description: 'Daily scripture and questions endpoints (Arabic, English, Bilingual)' },
         { name: 'Bible', description: 'Direct scripture reader and passage lookup endpoints (Arabic and English)' },
-        { name: 'Submissions', description: 'Student question submissions and streaks' },
+        { name: 'Streak', description: 'Student daily reading streak tracking, calendar history, and scheduled-day status' },
+        { name: 'Submissions', description: 'Student question submissions and points' },
         { name: 'Leaderboard', description: 'Multi-window cohort rankings (weekly, monthly, all-time)' },
         { name: 'Admin', description: 'Passage scheduling, question commits, and servant reports' },
         { name: 'AI', description: 'Bilingual AI question generation' },
@@ -85,12 +87,17 @@ export function buildApp() {
       docExpansion: 'list',
       deepLinking: true
     },
-    staticCSP: true
+    staticCSP: false
   });
 
-  // Redirect /documentation to /docs
-  app.get('/documentation', async (request, reply) => {
-    return reply.redirect('/docs');
+  // Alias /json to /docs/json for relative Swagger UI resolutions
+  app.get('/json', async (_request, reply) => {
+    return reply.redirect('/docs/json');
+  });
+
+  // Redirect /documentation to /docs/
+  app.get('/documentation', async (_request, reply) => {
+    return reply.redirect('/docs/');
   });
 
   // Attach identity middleware
@@ -126,6 +133,7 @@ export function buildApp() {
   app.register(async (apiV1) => {
     apiV1.register(readingsRoutes);
     apiV1.register(submissionsRoutes);
+    apiV1.register(streakRoutes);
     apiV1.register(aiRoutes);
     apiV1.register(adminRoutes);
     apiV1.register(leaderboardRoutes);

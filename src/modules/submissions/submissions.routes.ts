@@ -45,6 +45,7 @@ export async function submissionsRoutes(fastify: FastifyInstance) {
             points_earned: { type: 'number' },
             current_total_points: { type: 'number' },
             current_streak: { type: 'number' },
+            longest_streak: { type: 'number' },
             reading_completed: { type: 'boolean' }
           }
         },

@@ -42,7 +42,8 @@ const localizedReadingResponseSchema = (lang: 'ar' | 'en') => ({
         }
       },
       is_fully_completed: { type: 'boolean' },
-      total_points_earned_today: { type: 'number' }
+      total_points_earned_today: { type: 'number' },
+      current_streak: { type: 'number' }
     }
   },
   '4xx': {
@@ -224,7 +225,8 @@ export async function readingsRoutes(fastify: FastifyInstance) {
             verses: { type: 'array', items: { type: 'object', additionalProperties: true } },
             questions: { type: 'array', items: { type: 'object', additionalProperties: true } },
             is_fully_completed: { type: 'boolean' },
-            total_points_earned_today: { type: 'number' }
+            total_points_earned_today: { type: 'number' },
+            current_streak: { type: 'number' }
           }
         },
         '4xx': {

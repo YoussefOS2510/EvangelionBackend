@@ -41,6 +41,7 @@ export interface DailyReadingWithDetails {
   }>;
   is_fully_completed: boolean;
   total_points_earned_today: number;
+  current_streak: number;
 }
 
 export interface LocalizedDailyReading {
@@ -70,6 +71,7 @@ export interface LocalizedDailyReading {
   }>;
   is_fully_completed: boolean;
   total_points_earned_today: number;
+  current_streak: number;
 }
 
 export class ReadingsService {
@@ -204,6 +206,14 @@ export class ReadingsService {
       refAr = `${bookAr} ${r.start_chapter}: ${r.start_verse} - ${r.end_chapter}: ${r.end_verse}`;
     }
 
+    let userStreak = 0;
+    if (userId) {
+      const uRes = await query('SELECT current_streak FROM users WHERE id = $1', [userId]);
+      if (uRes.rows.length > 0) {
+        userStreak = uRes.rows[0].current_streak || 0;
+      }
+    }
+
     return {
       reading_id: r.id,
       group_id: r.group_id,
@@ -216,7 +226,8 @@ export class ReadingsService {
       verses,
       questions,
       is_fully_completed: isFullyCompleted,
-      total_points_earned_today: totalPointsEarned
+      total_points_earned_today: totalPointsEarned,
+      current_streak: userStreak
     };
   }
 
@@ -229,6 +240,9 @@ export class ReadingsService {
       language: lang,
       reference: isAr ? reading.reference.ar : reading.reference.en,
       translation: isAr ? reading.translation.ar : reading.translation.en,
+      is_fully_completed: reading.is_fully_completed,
+      total_points_earned_today: reading.total_points_earned_today,
+      current_streak: reading.current_streak,
       verses: reading.verses.map(v => ({
         book_number: v.book_number,
         chapter: v.chapter,
@@ -255,9 +269,7 @@ export class ReadingsService {
           user_answer: q.user_answer,
           is_correct: q.is_correct
         };
-      }),
-      is_fully_completed: reading.is_fully_completed,
-      total_points_earned_today: reading.total_points_earned_today
+      })
     };
   }
 

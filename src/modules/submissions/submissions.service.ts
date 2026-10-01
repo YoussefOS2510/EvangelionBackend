@@ -1,5 +1,6 @@
 import { query, getClient } from '../../db/pool.js';
 import { leaderboardService } from '../../redis/leaderboard.service.js';
+import { streakService } from '../streak/streak.service.js';
 
 export interface SubmitAnswerResult {
   question_id: string;
@@ -7,6 +8,7 @@ export interface SubmitAnswerResult {
   points_earned: number;
   current_total_points: number;
   current_streak: number;
+  longest_streak: number;
   reading_completed: boolean;
 }
 
@@ -43,7 +45,7 @@ export class SubmissionsService {
 
       // 3. Fetch user details
       const uRes = await client.query(
-        'SELECT id, group_id, total_points, current_streak FROM users WHERE id = $1',
+        'SELECT id, group_id, total_points, current_streak, longest_streak FROM users WHERE id = $1',
         [userId]
       );
       if (uRes.rows.length === 0) {
@@ -89,12 +91,11 @@ export class SubmissionsService {
 
       // 8. Update Streak on reading completion
       let updatedStreak = user.current_streak;
+      let longestStreak = user.longest_streak || user.current_streak;
       if (readingCompleted) {
-        updatedStreak = await this.calculateScheduledStreak(client, userId, user.group_id);
-        await client.query(
-          'UPDATE users SET current_streak = $1 WHERE id = $2',
-          [updatedStreak, userId]
-        );
+        const streakRes = await streakService.updateStreakOnCompletion(client, userId, user.group_id);
+        updatedStreak = streakRes.current_streak;
+        longestStreak = streakRes.longest_streak;
       }
 
       await client.query('COMMIT');
@@ -112,6 +113,7 @@ export class SubmissionsService {
         points_earned: pointsAwarded,
         current_total_points: updatedTotalPoints,
         current_streak: updatedStreak,
+        longest_streak: longestStreak,
         reading_completed: readingCompleted
       };
     } catch (err) {
@@ -121,44 +123,7 @@ export class SubmissionsService {
       client.release();
     }
   }
-
-  /**
-   * Calculates consecutive scheduled reading days completed by this kid.
-   * Streaks increment on consecutive scheduled days, without penalizing days where no reading was scheduled.
-   */
-  private async calculateScheduledStreak(client: any, userId: string, groupId: number): Promise<number> {
-    // Fetch distinct scheduled dates for this group up to today in reverse order
-    const scheduleRes = await client.query(`
-      SELECT dr.id, dr.scheduled_date
-      FROM daily_readings dr
-      WHERE dr.group_id = $1 AND dr.scheduled_date <= CURRENT_DATE
-      ORDER BY dr.scheduled_date DESC
-    `, [groupId]);
-
-    if (scheduleRes.rows.length === 0) return 1;
-
-    let streak = 0;
-    for (const row of scheduleRes.rows) {
-      // Check if user completed all questions for this reading
-      const checkRes = await client.query(`
-        SELECT 
-          (SELECT COUNT(*) FROM questions q WHERE q.reading_id = $1 AND q.is_approved = TRUE) AS total_q,
-          (SELECT COUNT(*) FROM submissions s WHERE s.reading_id = $1 AND s.user_id = $2) AS answered_q
-      `, [row.id, userId]);
-
-      const totalQ = parseInt(checkRes.rows[0].total_q, 10);
-      const answeredQ = parseInt(checkRes.rows[0].answered_q, 10);
-
-      if (totalQ > 0 && answeredQ >= totalQ) {
-        streak += 1;
-      } else {
-        // Streak broken at this scheduled reading
-        break;
-      }
-    }
-
-    return streak;
-  }
 }
 
 export const submissionsService = new SubmissionsService();
+

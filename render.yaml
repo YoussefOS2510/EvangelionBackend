@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: evangelion-backend
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: evangelion-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: evangelion-redis
+          property: connectionString
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: CHURCH_TIMEZONE
+        value: Africa/Cairo
+
+databases:
+  - name: evangelion-postgres
+    plan: free
+    databaseName: evangelion
+    user: evangelion
+
+  - type: redis
+    name: evangelion-redis
+    plan: free
+    ipAllowList: []

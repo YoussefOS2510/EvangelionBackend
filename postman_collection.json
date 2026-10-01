@@ -1,0 +1,724 @@
+{
+  "info": {
+    "_postman_id": "77df98b1-36f1-4f16-921a-bc076b9148b5",
+    "name": "Evangelion Bilingual Bible Platform API",
+    "description": "Comprehensive Postman collection for the Evangelion Church Sunday School Daily Bible Reading, Comprehension, Scheduled-Day Streaks, Multi-Window Leaderboards, and Servant Admin backend API.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. System & Health",
+      "item": [
+        {
+          "name": "Service Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Checks the operational status of the Evangelion Backend service."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Status is ok\", function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.status).to.eql(\"ok\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "OpenAPI JSON Specification",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/docs/json",
+              "host": ["{{baseUrl}}"],
+              "path": ["docs", "json"]
+            },
+            "description": "Returns raw OpenAPI 3.0 specification for automated schema validation and tooling."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Contains openapi version\", function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.openapi).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Daily Readings",
+      "item": [
+        {
+          "name": "Get Today Reading - Arabic (Van Dyck)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Group-Id", "value": "{{groupId}}", "type": "text" },
+              { "key": "X-User-Id", "value": "{{userId}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/readings/today/ar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "readings", "today", "ar"]
+            },
+            "description": "Returns localized Arabic scripture passage with diacritics (tashkeel), clean text, Arabic reference, comprehension questions, and user streak."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "if (json.reading_id) {",
+                  "    pm.environment.set(\"readingId\", json.reading_id);",
+                  "}",
+                  "if (json.questions && json.questions.length > 0) {",
+                  "    pm.environment.set(\"questionId\", json.questions[0].id);",
+                  "}",
+                  "pm.test(\"Language is Arabic\", function () {",
+                  "    pm.expect(json.language).to.eql(\"ar\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Today Reading - English (NKJV)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Group-Id", "value": "{{groupId}}", "type": "text" },
+              { "key": "X-User-Id", "value": "{{userId}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/readings/today/en",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "readings", "today", "en"]
+            },
+            "description": "Returns localized English scripture passage, English reference, questions, and user streak."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test(\"Language is English\", function () {",
+                  "    pm.expect(json.language).to.eql(\"en\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Today Reading - Bilingual",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Group-Id", "value": "{{groupId}}", "type": "text" },
+              { "key": "X-User-Id", "value": "{{userId}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/readings/today",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "readings", "today"]
+            },
+            "description": "Returns parallel bilingual verses (Arabic and English) with bilingual reference and questions."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test(\"Bilingual translations present\", function () {",
+                  "    pm.expect(json.translation.ar).to.exist;",
+                  "    pm.expect(json.translation.en).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Today Reading - Filter by Date Override",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Group-Id", "value": "{{groupId}}", "type": "text" },
+              { "key": "X-User-Id", "value": "{{userId}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/readings/today?date={{targetDate}}&lang=ar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "readings", "today"],
+              "query": [
+                { "key": "date", "value": "{{targetDate}}" },
+                { "key": "lang", "value": "ar" }
+              ]
+            },
+            "description": "Fetch reading for a specific historical date with optional language localization parameter."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Scripture Reader (Passage Lookup)",
+      "item": [
+        {
+          "name": "Lookup Arabic Passage (John 3:1-16)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bible/verses/ar?book_number=43&start_chapter=3&start_verse=1&end_verse=16",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "bible", "verses", "ar"],
+              "query": [
+                { "key": "book_number", "value": "43" },
+                { "key": "start_chapter", "value": "3" },
+                { "key": "start_verse", "value": "1" },
+                { "key": "end_verse", "value": "16" }
+              ]
+            },
+            "description": "Directly extract Scripture verses in Arabic (Smith & Van Dyck) with diacritics and clean text."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test(\"Returns verses array\", function () {",
+                  "    pm.expect(Array.isArray(json.verses)).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lookup English Passage (John 3:1-16)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bible/verses/en?book_number=43&start_chapter=3&start_verse=1&end_verse=16",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "bible", "verses", "en"],
+              "query": [
+                { "key": "book_number", "value": "43" },
+                { "key": "start_chapter", "value": "3" },
+                { "key": "start_verse", "value": "1" },
+                { "key": "end_verse", "value": "16" }
+              ]
+            },
+            "description": "Directly extract Scripture verses in English (New King James Version / KJV)."
+          }
+        },
+        {
+          "name": "Lookup Cross-Chapter Bilingual Passage",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/bible/verses?book_number=43&start_chapter=1&start_verse=35&end_chapter=2&end_verse=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "bible", "verses"],
+              "query": [
+                { "key": "book_number", "value": "43" },
+                { "key": "start_chapter", "value": "1" },
+                { "key": "start_verse", "value": "35" },
+                { "key": "end_chapter", "value": "2" },
+                { "key": "end_verse", "value": "5" }
+              ]
+            },
+            "description": "Extract cross-chapter verse range with side-by-side Arabic and English text."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Daily Streaks",
+      "item": [
+        {
+          "name": "Get User Streak Details & Calendar History",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-User-Id", "value": "{{userId}}", "type": "text" },
+              { "key": "X-Group-Id", "value": "{{groupId}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/streak",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "streak"]
+            },
+            "description": "Fetches student's consecutive scheduled-day streak, longest streak, today status (completed/pending/off_day/broken), next milestone, and recent reading history."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test(\"Streak details present\", function () {",
+                  "    pm.expect(json.current_streak).to.be.a(\"number\");",
+                  "    pm.expect(json.longest_streak).to.be.a(\"number\");",
+                  "    pm.expect(json.today_status).to.exist;",
+                  "    pm.expect(json.next_milestone).to.be.above(0);",
+                  "    pm.expect(Array.isArray(json.history)).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get User Streak Summary (Widget / Header)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-User-Id", "value": "{{userId}}", "type": "text" },
+              { "key": "X-Group-Id", "value": "{{groupId}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/streak/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "streak", "summary"]
+            },
+            "description": "Lightweight endpoint returning essential streak counters and today status for mobile home widgets and header badges."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test(\"Summary values valid\", function () {",
+                  "    pm.expect(json.current_streak).to.be.a(\"number\");",
+                  "    pm.expect(json.history).to.be.undefined;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Streak with Date Override",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-User-Id", "value": "{{userId}}", "type": "text" },
+              { "key": "X-Group-Id", "value": "{{groupId}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/streak?date={{targetDate}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "streak"],
+              "query": [
+                { "key": "date", "value": "{{targetDate}}" }
+              ]
+            },
+            "description": "Calculates streak status as of a historical date to simulate or verify scheduled-day continuity and off-days."
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Question Submissions",
+      "item": [
+        {
+          "name": "Submit Answer to Reading Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" },
+              { "key": "X-User-Id", "value": "{{userId}}", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question_id\": \"{{questionId}}\",\n  \"answer\": \"A\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/readings/{{readingId}}/submit",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "readings", "{{readingId}}", "submit"]
+            },
+            "description": "Submits student answer, checks correctness, increments points, updates streak if reading complete, and synchronizes multi-window Redis leaderboards."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 409\", function () {",
+                  "    pm.expect([200, 409]).to.include(pm.response.code);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "    var json = pm.response.json();",
+                  "    pm.test(\"Submission recorded\", function () {",
+                  "        pm.expect(json.is_correct).to.be.a(\"boolean\");",
+                  "        pm.expect(json.current_streak).to.be.a(\"number\");",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Duplicate Submission Check (Expect 409 Conflict)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" },
+              { "key": "X-User-Id", "value": "{{userId}}", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question_id\": \"{{questionId}}\",\n  \"answer\": \"A\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/readings/{{readingId}}/submit",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "readings", "{{readingId}}", "submit"]
+            },
+            "description": "Verifies database idempotency: prevents double counting of points if a student resubmits an already answered question."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 409 Conflict (or 200 on first run)\", function () {",
+                  "    pm.expect([200, 409]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Leaderboards",
+      "item": [
+        {
+          "name": "Get Weekly Cohort Leaderboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Group-Id", "value": "{{groupId}}", "type": "text" },
+              { "key": "X-User-Id", "value": "{{userId}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/leaderboard?window=weekly",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "leaderboard"],
+              "query": [
+                { "key": "window", "value": "weekly" }
+              ]
+            },
+            "description": "Fetches current weekly cohort rankings from Redis Sorted Sets with individual standing and streak badges."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test(\"Weekly window returned\", function () {",
+                  "    pm.expect(json.window).to.eql(\"weekly\");",
+                  "    pm.expect(Array.isArray(json.leaderboard)).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Monthly Cohort Leaderboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Group-Id", "value": "{{groupId}}", "type": "text" },
+              { "key": "X-User-Id", "value": "{{userId}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/leaderboard?window=monthly",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "leaderboard"],
+              "query": [
+                { "key": "window", "value": "monthly" }
+              ]
+            },
+            "description": "Fetches current monthly cohort rankings from Redis Sorted Sets."
+          }
+        },
+        {
+          "name": "Get All-Time Cohort Leaderboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Group-Id", "value": "{{groupId}}", "type": "text" },
+              { "key": "X-User-Id", "value": "{{userId}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/leaderboard?window=all_time",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "leaderboard"],
+              "query": [
+                { "key": "window", "value": "all_time" }
+              ]
+            },
+            "description": "Fetches cumulative all-time points leaderboard for this Sunday school cohort."
+          }
+        },
+        {
+          "name": "Get Top-10 Leaderboard (Custom Limit)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-Group-Id", "value": "{{groupId}}", "type": "text" },
+              { "key": "X-User-Id", "value": "{{userId}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/leaderboard?window=weekly&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "leaderboard"],
+              "query": [
+                { "key": "window", "value": "weekly" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "Returns top 10 students in the cohort for concise leaderboard widgets."
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. AI Question Generation",
+      "item": [
+        {
+          "name": "Generate Bilingual AI Comprehension Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" },
+              { "key": "X-User-Role", "value": "admin_servant", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"book_number\": 43,\n  \"start_chapter\": 3,\n  \"start_verse\": 1,\n  \"end_chapter\": 3,\n  \"end_verse\": 5,\n  \"target_group_ids\": [3],\n  \"type\": \"mcq\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ai/generate-questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ai", "generate-questions"]
+            },
+            "description": "Triggers Google Gemini to synthesize age-tailored bilingual multiple choice questions with vocabulary from Van Dyck Arabic and NKJV English."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test(\"Bilingual prompts returned\", function () {",
+                  "    pm.expect(json.question.prompt_ar).to.exist;",
+                  "    pm.expect(json.question.prompt_en).to.exist;",
+                  "    pm.expect(json.question.correct_answer).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "8. Admin & Servant Operations",
+      "item": [
+        {
+          "name": "Schedule Daily Passage Across Multiple Cohorts",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" },
+              { "key": "X-User-Role", "value": "admin_servant", "type": "text" },
+              { "key": "X-User-Id", "value": "{{servantUserId}}", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"group_ids\": [1, 2, 3],\n  \"scheduled_date\": \"2026-10-15\",\n  \"book_number\": 43,\n  \"start_chapter\": 3,\n  \"start_verse\": 1,\n  \"end_chapter\": 3,\n  \"end_verse\": 7,\n  \"excluded_verses\": [],\n  \"generate_ai_questions\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/readings/schedule",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "readings", "schedule"]
+            },
+            "description": "Atomically provisions or updates daily readings across selected cohorts with optional automatic AI question generation."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test(\"Reading IDs created\", function () {",
+                  "    pm.expect(Array.isArray(json.reading_ids)).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Commit & Approve Questions",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" },
+              { "key": "X-User-Role", "value": "admin_servant", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reading_id\": \"{{readingId}}\",\n  \"questions\": [\n    {\n      \"type\": \"mcq\",\n      \"prompt_ar\": \"مَا اسْمُ الرَّجُلِ الْفَرِّيسِيِّ الَّذِي جَاءَ إِلَى يَسُوعَ لَيْلاً؟\",\n      \"prompt_en\": \"What was the name of the Pharisee who came to Jesus by night?\",\n      \"options\": {\n        \"A\": { \"ar\": \"نِيقُودِيمُوسُ\", \"en\": \"Nicodemus\" },\n        \"B\": { \"ar\": \"بُولُسُ\", \"en\": \"Paul\" },\n        \"C\": { \"ar\": \"بُطْرُسُ\", \"en\": \"Peter\" },\n        \"D\": { \"ar\": \"لِعَازَرُ\", \"en\": \"Lazarus\" }\n      },\n      \"correct_answer\": \"A\",\n      \"points_value\": 10,\n      \"sort_order\": 1,\n      \"is_approved\": true\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/questions/commit",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "questions", "commit"]
+            },
+            "description": "Replaces or commits finalized approved questions to a daily reading in the database."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Servant Daily Cohort Roster Completion Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "X-User-Role", "value": "viewer_servant", "type": "text" },
+              { "key": "X-User-Id", "value": "{{servantUserId}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/servant/reports/daily?group_id={{groupId}}&date={{targetDate}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "servant", "reports", "daily"],
+              "query": [
+                { "key": "group_id", "value": "{{groupId}}" },
+                { "key": "date", "value": "{{targetDate}}" }
+              ]
+            },
+            "description": "Returns roster of all students in a Sunday school cohort with completion flags, question progress (e.g. 1/1), points earned today, and current streaks."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test(\"Students report array present\", function () {",
+                  "    pm.expect(Array.isArray(json.students)).to.be.true;",
+                  "    pm.expect(json.total_students).to.be.a(\"number\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}
