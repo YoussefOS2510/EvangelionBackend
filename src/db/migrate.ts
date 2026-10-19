@@ -8,7 +8,16 @@ const __dirname = path.dirname(__filename);
 
 export async function runMigrations() {
   console.log('🚀 Running database migrations...');
-  const migrationsDir = path.join(__dirname, 'migrations');
+  let migrationsDir = path.join(__dirname, 'migrations');
+  if (!fs.existsSync(migrationsDir)) {
+    migrationsDir = path.join(process.cwd(), 'src', 'db', 'migrations');
+  }
+
+  if (!fs.existsSync(migrationsDir)) {
+    console.warn(`⚠️ Migrations directory not found at: ${migrationsDir}`);
+    return;
+  }
+
   const files = fs.readdirSync(migrationsDir).filter(f => f.endsWith('.sql')).sort();
 
   for (const file of files) {
@@ -21,7 +30,11 @@ export async function runMigrations() {
 
 export async function runSeeds() {
   console.log('🌱 Running database seeds...');
-  const seedsDir = path.join(__dirname, 'seeds');
+  let seedsDir = path.join(__dirname, 'seeds');
+  if (!fs.existsSync(seedsDir)) {
+    seedsDir = path.join(process.cwd(), 'src', 'db', 'seeds');
+  }
+
   if (fs.existsSync(seedsDir)) {
     const files = fs.readdirSync(seedsDir).filter(f => f.endsWith('.sql')).sort();
     for (const file of files) {
@@ -34,7 +47,12 @@ export async function runSeeds() {
 }
 
 // Execute directly if run as CLI script
-if (process.argv[1] && process.argv[1].endsWith('migrate.ts')) {
+const isCli = process.argv[1] && (
+  process.argv[1].endsWith('migrate.ts') ||
+  process.argv[1].endsWith('migrate.js')
+);
+
+if (isCli) {
   (async () => {
     try {
       await runMigrations();

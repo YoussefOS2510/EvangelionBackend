@@ -4,11 +4,18 @@ import { memoryDb } from './memory_db.js';
 
 const { Pool } = pg;
 
+const isRemoteDb = Boolean(
+  config.db.connectionString &&
+  !config.db.connectionString.includes('localhost') &&
+  !config.db.connectionString.includes('127.0.0.1')
+);
+
 export const pool = new Pool({
   connectionString: config.db.connectionString,
+  ssl: isRemoteDb ? { rejectUnauthorized: false } : undefined,
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 5000,
 });
 
 let postgresAvailable: boolean | null = null;
