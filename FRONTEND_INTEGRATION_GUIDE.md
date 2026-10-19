@@ -59,9 +59,10 @@ Every student belongs to one of these groups (passed via `X-Group-Id`):
 ## 2. Global Headers & HTTP Client Setup
 
 ### 🌐 Live Public Backend Endpoint:
-- **Base URL:** `https://genre-minimize-thorough-hands.trycloudflare.com` (or `http://localhost:3000` when running locally)
-- **Interactive Swagger Docs:** `https://genre-minimize-thorough-hands.trycloudflare.com/docs`
-- **OpenAPI JSON Spec:** `https://genre-minimize-thorough-hands.trycloudflare.com/docs/json`
+- **Base URL:** `https://evangelion-backend.vercel.app`
+- **Interactive Swagger Docs:** `https://evangelion-backend.vercel.app/docs`
+- **OpenAPI JSON Spec:** `https://evangelion-backend.vercel.app/docs/json`
+- **Health Check:** `https://evangelion-backend.vercel.app/health`
 
 Every client request must include identification headers. Configure an Axios or Fetch interceptor:
 
