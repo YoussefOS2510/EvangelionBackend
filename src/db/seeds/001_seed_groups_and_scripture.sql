@@ -78,35 +78,24 @@ INSERT INTO bible_verses (book_number, book_name_en, book_name_ar, chapter, vers
  'اجاب يسوع: «الحق الحق اقول لك: ان كان احد لا يولد من الماء والروح لا يقدر ان يدخل ملكوت الله».')
 ON CONFLICT (book_number, chapter, verse) DO NOTHING;
 
--- 4. Sample Daily Reading Scheduled for Today (Group 3: Grade 5 & 6 Boys)
-INSERT INTO daily_readings (id, group_id, scheduled_date, book_number, start_chapter, start_verse, end_chapter, end_verse, excluded_verses, created_by)
-VALUES (
-    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-    3,
-    CURRENT_DATE,
-    43,
-    3, 1, 3, 5,
-    '[]'::jsonb,
-    '99999999-9999-9999-9999-999999999999'
-)
+-- 4. Sample Daily Readings Scheduled for Today (All 7 Sunday School Cohorts)
+INSERT INTO daily_readings (id, group_id, scheduled_date, book_number, start_chapter, start_verse, end_chapter, end_verse, excluded_verses, created_by) VALUES
+    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1', 1, CURRENT_DATE, 43, 3, 1, 3, 5, '[]'::jsonb, '99999999-9999-9999-9999-999999999999'),
+    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2', 2, CURRENT_DATE, 43, 3, 1, 3, 5, '[]'::jsonb, '99999999-9999-9999-9999-999999999999'),
+    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 3, CURRENT_DATE, 43, 3, 1, 3, 5, '[]'::jsonb, '99999999-9999-9999-9999-999999999999'),
+    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4', 4, CURRENT_DATE, 43, 3, 1, 3, 5, '[]'::jsonb, '99999999-9999-9999-9999-999999999999'),
+    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5', 5, CURRENT_DATE, 43, 3, 1, 3, 5, '[]'::jsonb, '99999999-9999-9999-9999-999999999999'),
+    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa6', 6, CURRENT_DATE, 43, 3, 1, 3, 5, '[]'::jsonb, '99999999-9999-9999-9999-999999999999'),
+    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa7', 7, CURRENT_DATE, 43, 3, 1, 3, 5, '[]'::jsonb, '99999999-9999-9999-9999-999999999999')
 ON CONFLICT (group_id, scheduled_date) DO NOTHING;
 
--- 5. Sample Question for Today's Reading
-INSERT INTO questions (id, reading_id, type, prompt_ar, prompt_en, options, correct_answer, points_value, sort_order)
-VALUES (
-    'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
-    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-    'mcq',
-    'مَا اسْمُ الرَّجُلِ الْفَرِّيسِيِّ الَّذِي جَاءَ إِلَى يَسُوعَ لَيْلاً؟',
-    'What was the name of the Pharisee who came to Jesus by night?',
-    '{
-        "A": {"ar": "نِيقُودِيمُوسُ", "en": "Nicodemus"},
-        "B": {"ar": "بُولُسُ", "en": "Paul"},
-        "C": {"ar": "بُطْرُسُ", "en": "Peter"},
-        "D": {"ar": "لِعَازَرُ", "en": "Lazarus"}
-    }'::jsonb,
-    'A',
-    10,
-    1
-)
+-- 5. Sample Questions for Today's Readings
+INSERT INTO questions (id, reading_id, type, prompt_ar, prompt_en, options, correct_answer, points_value, sort_order) VALUES
+    ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1', 'mcq', 'مَا اسْمُ الرَّجُلِ الْفَرِّيسِيِّ الَّذِي جَاءَ إِلَى يَسُوعَ لَيْلاً؟', 'What was the name of the Pharisee who came to Jesus by night?', '{"A": {"ar": "نِيقُودِيمُوسُ", "en": "Nicodemus"}, "B": {"ar": "بُولُسُ", "en": "Paul"}, "C": {"ar": "بُطْرُسُ", "en": "Peter"}, "D": {"ar": "لِعَازَرُ", "en": "Lazarus"}}'::jsonb, 'A', 10, 1),
+    ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2', 'mcq', 'مَا اسْمُ الرَّجُلِ الْفَرِّيسِيِّ الَّذِي جَاءَ إِلَى يَسُوعَ لَيْلاً؟', 'What was the name of the Pharisee who came to Jesus by night?', '{"A": {"ar": "نِيقُودِيمُوسُ", "en": "Nicodemus"}, "B": {"ar": "بُولُسُ", "en": "Paul"}, "C": {"ar": "بُطْرُسُ", "en": "Peter"}, "D": {"ar": "لِعَازَرُ", "en": "Lazarus"}}'::jsonb, 'A', 10, 1),
+    ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'mcq', 'مَا اسْمُ الرَّجُلِ الْفَرِّيسِيِّ الَّذِي جَاءَ إِلَى يَسُوعَ لَيْلاً؟', 'What was the name of the Pharisee who came to Jesus by night?', '{"A": {"ar": "نِيقُودِيمُوسُ", "en": "Nicodemus"}, "B": {"ar": "بُولُسُ", "en": "Paul"}, "C": {"ar": "بُطْرُسُ", "en": "Peter"}, "D": {"ar": "لِعَازَرُ", "en": "Lazarus"}}'::jsonb, 'A', 10, 1),
+    ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb4', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4', 'mcq', 'مَا اسْمُ الرَّجُلِ الْفَرِّيسِيِّ الَّذِي جَاءَ إِلَى يَسُوعَ لَيْلاً؟', 'What was the name of the Pharisee who came to Jesus by night?', '{"A": {"ar": "نِيقُودِيمُوسُ", "en": "Nicodemus"}, "B": {"ar": "بُولُسُ", "en": "Paul"}, "C": {"ar": "بُطْرُسُ", "en": "Peter"}, "D": {"ar": "لِعَازَرُ", "en": "Lazarus"}}'::jsonb, 'A', 10, 1),
+    ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb5', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5', 'mcq', 'مَا اسْمُ الرَّجُلِ الْفَرِّيسِيِّ الَّذِي جَاءَ إِلَى يَسُوعَ لَيْلاً؟', 'What was the name of the Pharisee who came to Jesus by night?', '{"A": {"ar": "نِيقُودِيمُوسُ", "en": "Nicodemus"}, "B": {"ar": "بُولُسُ", "en": "Paul"}, "C": {"ar": "بُطْرُسُ", "en": "Peter"}, "D": {"ar": "لِعَازَرُ", "en": "Lazarus"}}'::jsonb, 'A', 10, 1),
+    ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb6', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa6', 'mcq', 'مَا اسْمُ الرَّجُلِ الْفَرِّيسِيِّ الَّذِي جَاءَ إِلَى يَسُوعَ لَيْلاً؟', 'What was the name of the Pharisee who came to Jesus by night?', '{"A": {"ar": "نِيقُودِيمُوسُ", "en": "Nicodemus"}, "B": {"ar": "بُولُسُ", "en": "Paul"}, "C": {"ar": "بُطْرُسُ", "en": "Peter"}, "D": {"ar": "لِعَازَرُ", "en": "Lazarus"}}'::jsonb, 'A', 10, 1),
+    ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb7', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa7', 'mcq', 'مَا اسْمُ الرَّجُلِ الْفَرِّيسِيِّ الَّذِي جَاءَ إِلَى يَسُوعَ لَيْلاً؟', 'What was the name of the Pharisee who came to Jesus by night?', '{"A": {"ar": "نِيقُودِيمُوسُ", "en": "Nicodemus"}, "B": {"ar": "بُولُسُ", "en": "Paul"}, "C": {"ar": "بُطْرُسُ", "en": "Peter"}, "D": {"ar": "لِعَازَرُ", "en": "Lazarus"}}'::jsonb, 'A', 10, 1)
 ON CONFLICT (id) DO NOTHING;

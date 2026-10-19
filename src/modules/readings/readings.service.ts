@@ -83,6 +83,37 @@ export class ReadingsService {
     endVerse: number,
     excludedVerses: ExcludedVerse[] = []
   ): Promise<BibleVerseRow[]> {
+    let rangeCondition = '';
+    let params: any[] = [];
+
+    if (startChapter === endChapter) {
+      rangeCondition = 'chapter = $2 AND verse BETWEEN $3 AND $4';
+      params = [bookNumber, startChapter, startVerse, endVerse];
+    } else {
+      rangeCondition = `
+        (
+          (chapter = $2 AND verse >= $3)
+          OR (chapter > $2 AND chapter < $4)
+          OR (chapter = $4 AND verse <= $5)
+        )
+      `;
+      params = [bookNumber, startChapter, startVerse, endChapter, endVerse];
+    }
+
+    let exclusionCondition = '';
+    if (excludedVerses && excludedVerses.length > 0) {
+      const exParamIdx = params.length + 1;
+      exclusionCondition = `
+        AND NOT EXISTS (
+          SELECT 1 
+          FROM jsonb_to_recordset($${exParamIdx}::jsonb) AS ex(chapter INT, verse INT)
+          WHERE ex.chapter = bible_verses.chapter 
+            AND ex.verse = bible_verses.verse
+        )
+      `;
+      params.push(JSON.stringify(excludedVerses));
+    }
+
     const sql = `
       SELECT 
           book_number,
@@ -93,33 +124,12 @@ export class ReadingsService {
           text_en_nkjv AS text_en 
       FROM bible_verses 
       WHERE book_number = $1 
-        AND (
-          ($2 = $4 AND chapter = $2 AND verse BETWEEN $3 AND $5)
-          OR
-          ($2 < $4 AND chapter = $2 AND verse >= $3)
-          OR
-          ($2 < $4 AND chapter > $2 AND chapter < $4)
-          OR
-          ($2 < $4 AND chapter = $4 AND verse <= $5)
-        )
-        AND NOT EXISTS (
-          SELECT 1 
-          FROM jsonb_to_recordset($6::jsonb) AS ex(chapter INT, verse INT)
-          WHERE ex.chapter = bible_verses.chapter 
-            AND ex.verse = bible_verses.verse
-        )
+        AND ${rangeCondition}
+        ${exclusionCondition}
       ORDER BY chapter ASC, verse ASC;
     `;
 
-    const res = await query<BibleVerseRow>(sql, [
-      bookNumber,
-      startChapter,
-      startVerse,
-      endChapter,
-      endVerse,
-      JSON.stringify(excludedVerses)
-    ]);
-
+    const res = await query<BibleVerseRow>(sql, params);
     return res.rows;
   }
 
@@ -131,7 +141,7 @@ export class ReadingsService {
     // 1. Fetch reading
     const readingRes = await query(`
       SELECT 
-        dr.id, dr.group_id, dr.scheduled_date, dr.book_number,
+        dr.id, dr.group_id, dr.scheduled_date::TEXT AS scheduled_date, dr.book_number,
         dr.start_chapter, dr.start_verse, dr.end_chapter, dr.end_verse,
         dr.excluded_verses,
         bv.book_name_en, bv.book_name_ar

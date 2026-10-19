@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { buildApp } from '../src/app.js';
 import { FastifyInstance } from 'fastify';
 import { memoryDb } from '../src/db/memory_db.js';
+import { query } from '../src/db/pool.js';
 
 describe('Daily Streaks Engine & Endpoints', () => {
   let app: FastifyInstance;
@@ -104,21 +105,29 @@ describe('Daily Streaks Engine & Endpoints', () => {
   });
 
   it('POST /api/v1/readings/:id/submit completes reading, increments points and updates streak', async () => {
-    // Create a fresh test user in memoryDb
+    // Create a fresh test user in active database
     const newUserId = '44444444-4444-4444-4444-444444444444';
-    memoryDb.users.push({
-      id: newUserId,
-      group_id: 3,
-      full_name: 'Test Kid',
-      username: 'test_kid',
-      role: 'kid',
-      preferred_lang: 'en',
-      total_points: 0,
-      current_streak: 0,
-      longest_streak: 0,
-      last_completed_date: null,
-      is_active: true
-    });
+    await query('DELETE FROM submissions WHERE user_id = $1', [newUserId]);
+    await query(`
+      INSERT INTO users (id, group_id, full_name, username, role, preferred_lang, total_points, current_streak)
+      VALUES ($1, 3, 'Test Kid', 'test_kid', 'kid', 'en', 0, 0)
+      ON CONFLICT (id) DO UPDATE SET total_points = 0, current_streak = 0
+    `, [newUserId]);
+    if (!memoryDb.users.some(u => u.id === newUserId)) {
+      memoryDb.users.push({
+        id: newUserId,
+        group_id: 3,
+        full_name: 'Test Kid',
+        username: 'test_kid',
+        role: 'kid',
+        preferred_lang: 'en',
+        total_points: 0,
+        current_streak: 0,
+        longest_streak: 0,
+        last_completed_date: null,
+        is_active: true
+      });
+    }
 
     // 1. Fetch today's reading to get readingId and questionId
     const readingRes = await app.inject({

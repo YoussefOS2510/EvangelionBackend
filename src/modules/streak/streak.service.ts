@@ -86,7 +86,7 @@ export class StreakService {
     // 2. Fetch scheduled readings for this group up to targetDate (up to past 30 scheduled readings)
     const scheduleRes = await query(`
       SELECT 
-        dr.id, dr.scheduled_date, dr.book_number,
+        dr.id, dr.scheduled_date::TEXT AS scheduled_date, dr.book_number,
         dr.start_chapter, dr.start_verse, dr.end_chapter, dr.end_verse
       FROM daily_readings dr
       WHERE dr.group_id = $1 AND dr.scheduled_date <= $2
@@ -127,11 +127,15 @@ export class StreakService {
         ? `${bookNameEn} ${row.start_chapter}:${row.start_verse}-${row.end_verse}`
         : `${bookNameEn} ${row.start_chapter}:${row.start_verse} - ${row.end_chapter}:${row.end_verse}`;
 
+      const scheduledDateStr = typeof row.scheduled_date === 'string'
+        ? row.scheduled_date.split('T')[0]
+        : (row.scheduled_date instanceof Date
+            ? `${row.scheduled_date.getFullYear()}-${String(row.scheduled_date.getMonth() + 1).padStart(2, '0')}-${String(row.scheduled_date.getDate()).padStart(2, '0')}`
+            : String(row.scheduled_date));
+
       history.push({
         reading_id: row.id,
-        scheduled_date: typeof row.scheduled_date === 'string' 
-          ? row.scheduled_date 
-          : new Date(row.scheduled_date).toISOString().split('T')[0],
+        scheduled_date: scheduledDateStr,
         book_number: row.book_number,
         book_name_ar: bookNameAr,
         book_name_en: bookNameEn,
@@ -234,7 +238,7 @@ export class StreakService {
 
     // Fetch scheduled readings for this group up to today in reverse order
     const scheduleRes = await client.query(`
-      SELECT dr.id, dr.scheduled_date
+      SELECT dr.id, dr.scheduled_date::TEXT AS scheduled_date
       FROM daily_readings dr
       WHERE dr.group_id = $1 AND dr.scheduled_date <= $2
       ORDER BY dr.scheduled_date DESC

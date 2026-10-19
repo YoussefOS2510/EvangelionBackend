@@ -18,6 +18,8 @@
     "@fastify/swagger": "^9.8.1",
     "@fastify/swagger-ui": "^6.1.1",
     "@google/generative-ai": "^0.24.0",
+    "@neon/config": "^1.9.2",
+    "@neon/env": "^1.6.3",
     "dotenv": "^16.4.7",
     "fastify": "^5.2.1",
     "ioredis": "^5.6.0",

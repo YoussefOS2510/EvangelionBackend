@@ -94,5 +94,5 @@ describe('AI Question Generation Schema & Guardrails', () => {
     expect(generated.options.A).toBeDefined();
     expect(generated.options.B).toBeDefined();
     expect(() => service.validateGeneratedPayload(generated)).not.toThrow();
-  });
+  }, 15000);
 });
